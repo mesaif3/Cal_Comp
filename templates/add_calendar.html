@@ -1,0 +1,16 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Log In
+{% endblock %}
+
+{% block main %}
+    <form action="/add_calendar" method="post">
+        <div class="form-group">
+            <div>Enter a name!</div>
+            <input autocomplete="off" autofocus class="form-control" name="calendar_name" placeholder="Name" type="text">
+        </div>
+        <button class="btn btn-primary" type="submit">Join Session</button>
+        <div>To import an existing user, follow the name with their code!</div>
+    </form>
+{% endblock %}

@@ -1,0 +1,188 @@
+{% extends "layout.html" %}
+
+{% block title %}
+Log In
+{% endblock %}
+
+{% block javascript%}
+    <script>
+        var days = {{days|tojson}}
+        var myColor = '{{person.color}}'
+        var oldColor
+        var user = {}
+
+        function initialize()
+            {
+
+                // add user's id to the name bar
+                document.querySelector("a[href='/calendar_info/{{person.name}}/{{person.id}}']").innerHTML = '{{person.name ~'#'~ person.id}}'
+
+
+                // load calendar data
+                user = {
+                    "Name":document.querySelector("#user-schedule").getAttribute("data-name"),
+                    "ID":{{person.id}},
+                    "Schedule":{{person.schedule|tojson}},
+                }
+
+                // configure calendar to match the saved version
+                for (let dayIndex=0; dayIndex<days.length; dayIndex++){
+                    for (let hour = 0; hour<24; hour++){
+                        day=days[dayIndex]
+                        if ((typeof user["Schedule"][day][hour] != 'undefined') && (user["Schedule"][day][hour] != '')) {
+                            var buttonID = '#' + days[dayIndex] + '-' + hour.toString()
+                            alter(document.querySelector(buttonID))
+                        }
+                    }
+                }
+                render_schedule(user)
+
+                // user interactablilty
+                // holding mouse allows user to hover-to-select
+                $(document).mousedown( function(){
+                    $(":button").mouseleave(alter)
+                })
+                // releasing the mouse disables hover=to-select
+                $(document).mouseup( function(){
+                    $(":button").off( "mouseleave" )
+                    // assemble the schedule txt
+                    render_schedule(user)
+                                    })
+
+            }
+
+        function alter_column(day){
+            if (document.querySelector("#"+day+"-col").classList.contains("active")) {
+                var color = myColor
+            }
+            else{
+                var color = "secondary"
+            }
+
+            document.querySelectorAll("td."+day+" > .btn-"+color).forEach(function(button){
+                alter(button)
+            })
+        }
+
+        // alter the state of the button chosen
+        function alter(object){
+            var cl = event.target.classList
+
+            if (typeof object != 'undefined'){
+                if (object.type == "button"){
+                    var cl = object.classList
+                }
+            }
+
+            cl.toggle("btn-secondary");
+            cl.toggle("btn-"+myColor);
+        }
+
+        // assemble the schedule txt
+        function render_schedule(user={"Name":"unkown"}){
+            var buttons = document.querySelectorAll("button.btn-"+myColor)
+            var schedule = {"Name": user["Name"], "Schedule":{}}
+            for (let dayIndex=0; dayIndex<days.length; dayIndex++){
+                schedule["Schedule"][days[dayIndex]] = {}
+            }
+            buttons.forEach(function(button){
+                var day_hour = button.id.split("-")
+                day = day_hour[0]
+                hour = day_hour[1]
+                schedule["Schedule"][day][hour] = user["ID"]
+            })
+            document.querySelector("input[name='schedule']").value = JSON.stringify(schedule)
+        }
+
+        // function to clear all the buttons selected
+        function clear_schedule(){
+            document.querySelectorAll(".btn-"+myColor).forEach(function(button){
+                alter(button)
+            })
+        }
+
+        function changeColor(newColor){
+            document.querySelector("input[name='myColor']").value = newColor
+
+            document.querySelectorAll('button.btn-'+myColor).forEach(function(button){
+                var cl = button.classList
+                cl.toggle("btn-"+myColor);
+                cl.toggle("btn-"+newColor);
+            })
+
+            myColor = newColor
+
+        }
+
+        // initialize things after document is loaded
+        document.addEventListener('DOMContentLoaded', initialize);
+    </script>
+{% endblock %}
+
+{% block dynamic_css %}
+{% if custom_color %}
+<style>
+.btn-{{custom_color}}
+{
+    background-color: #{{custom_color}} !important;
+    border-color: #{{custom_color}};
+}
+</style>
+{% endif %}
+{% endblock %}
+
+{% block main_no_scroll_up %}
+
+
+<form action={{["/calendar_info/", person.name, person.id]|join("/")}} method="post">
+    <button class="btn btn-success" type="submit">save</button>
+
+    <div onclick="clear_schedule()" class="btn btn-danger">clear</div>
+
+{% endblock %}
+
+{% block main %}
+    <table class="table table-striped">
+        <thead class="">
+            <th><div class="btn">Time</div></th>
+
+            {% for day in days %}
+            <th>
+                <div class="btn-group-toggle" data-toggle="buttons">
+                    <label onclick="alter_column('{{day}}')" class="btn btn-outline-dark" id="{{day}}-col">
+                        <input type="checkbox" autocomplete="off"> {{ day }}
+                    </label>
+                </div>
+            </th>
+            {% endfor %}
+        </thead>
+
+        <tbody >
+        {% for time in range(24) %}
+        <tr class={{['r',time]|join("")}}>
+            <td class="">{{ time~':00' }}</td>{% for day in days %}<td class='{{day}} p-1'><button onmouseup="alter()" data-bs-toggle="button" type="button" class="schedule-button btn btn-secondary btn-block" id={{ [day, time]|join("-") }}>
+                <!-- {{ person.schedule[day][time] }} -->
+            </button></td>{% endfor %}
+        </tr>
+        {% endfor %}
+    </tbody>
+    </table>
+{% endblock %}
+
+{% block main_no_scroll_down %}
+    <div>
+        <div>Choose a color!</div>
+        {% for color in colors %}
+        <div onclick="changeColor('{{color}}')" class="btn btn-{{color}} col-1 empty-button" type="button" style="min-height: 40px"></div>
+        {% endfor %}
+        <div onclick="changeColor('{{custom_color}}')" class="btn btn-{{custom_color}} col-1 " type="button" style="min-height: 40px"></div>
+    </div>
+
+    <div class="form-group">
+        <input autocomplete="off" class="form-control" name="schedule" type="text" hidden>
+        <input autocomplete="off" class="form-control" name="myColor" type="text" hidden>
+    </div>
+
+    <meta id="user-schedule" data-name="{{person.name}}" data-other='{{person.schedule|tojson}}'>
+</form>
+{% endblock %}

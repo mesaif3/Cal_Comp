@@ -1,0 +1,75 @@
+{% extends "layout.html" %}
+
+{% block title %}
+Log In
+{% endblock %}
+
+{% block javascript%}
+    <script>
+        function initialize(){
+            {% for person in people %} // checking the box for {{person}}
+            document.querySelector("input[value='{{person.id}}']").checked = true;
+            {% endfor %}
+        }
+
+        document.addEventListener('DOMContentLoaded', initialize);
+    </script>
+{% endblock %}
+
+{% block dynamic_css %}
+{% if custom_color %}
+<style>
+.btn-{{color}}
+{
+    background-color: #{{color}} !important;
+    border-color: #{{kcolor}};
+}
+</style>
+{% endif %}
+{% endblock %}
+
+{% block main_no_scroll_up %}
+<form action="/" method="post">
+    <label>Choose which people's schedules to view!</label>
+    <div class="form-group">
+        <div class="btn=group btn-group-toggle" data-toggle="buttons">
+            {% for person in session['people'].values() %}
+            <label class="btn btn-outline-{{person.color}}">
+              <input type="checkbox" value="{{person.id}}" name="to_show" autocomplete="off"> {{person.name}}
+            </label>
+            {% endfor %}
+          </div>
+    </div>
+        <button class="col btn btn-success" type="submit">Show me my choices!</button>
+</form>
+{% endblock %}
+
+{% block main %}
+    <table class="table table-striped table-bordered">
+        <thead>
+            <th>Time</th>
+            {% for day in days %}
+            <th>{{ day }}</th>
+            {% endfor %}
+        </thead>
+        {% for time in range(24) %}
+        <tr>
+            <td>{{ time~':00' }}</td>{% for day in days %}
+            {% if combined.schedule[day][time|string] %}
+            {% set who_is_busy_id = combined.schedule[day][time|string].split(", ") %}
+            <td class="full" style="padding: 0.1rem">
+                <table class="mx-auto" style="width: 100%">
+                    <tr>
+                {% for id in who_is_busy_id %}
+                <td class="btn-{{ session['people'][id|int].color }}" style="border: none">{{ session['people'][id|int].name[0:2] }}</td>
+                {% endfor %}</tr>
+                </table>
+            </td>
+            {% else %}
+            <td class="empty" style="padding: 0.1rem"></td>
+            {% endif %}
+            {% endfor %}
+        </tr>
+        {% endfor %}
+    </table>
+{% endblock %}
