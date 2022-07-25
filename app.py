@@ -128,6 +128,7 @@ def join_session(this_route="/join_session"):
         print(session["session_name"])
         print(session["people"])
         print(session["active_people"])
+        
         # Redirect user to home page
         return redirect("/")
 
@@ -182,7 +183,6 @@ def new_session(this_route="/new_session", code=200):
         print(session["session_name"]  )
         print(session["people"]       )
         print(session["active_people"] )
-        sys.stdout.flush()
 
         return redirect("/")
     return render_template("new_session.html"), code
