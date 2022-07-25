@@ -124,7 +124,10 @@ def join_session(this_route="/join_session"):
         session["session_name"] = SName
         session["people"] = get_people()
         session["active_people"] = list(session["people"].values())
-
+        print(session["session_id"])
+        print(session["session_name"])
+        print(session["people"])
+        print(session["active_people"])
         # Redirect user to home page
         return redirect("/")
 
