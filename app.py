@@ -158,7 +158,17 @@ def new_session(this_route="/new_session", code=200):
 
         # creates a new session with the given name and an unused id
         db.execute(f"INSERT INTO {SESSIONS} (session_name) VALUES(?)", SName)
-        SID = db.execute(f"SELECT MAX(session_id) FROM {SESSIONS}")[0].get('MAX(session_id)', 0)
+        query = db.execute(f"SELECT * FROM {SESSIONS} ORDER BY session_id DESC LIMIT 1")[0]
+        SID = query['session_id']
+        SName2 = query['session_name']
+
+        # check if the correct session was found
+        if SName2 != SName or db.execute(f"SELECT * FROM {SESSION_USERS} WHERE (session_id=?)",SID):
+            print(query)
+            print(SName2)
+            print(SName)
+            print(db.execute(f"SELECT * FROM {SESSION_USERS} WHERE (session_id=?)",SID))
+            return apology("error in creating session", 403)
 
         session["session_id"] = SID
         session["session_name"] = SName
