@@ -19,6 +19,9 @@ Todo:
 5) custom colors
 """
 
+SESSIONS = "sessions2"
+USERS = "users2"
+SESSION_USERS = "session_users2"
 
 # Configure application
 app = Flask(__name__)
@@ -42,9 +45,10 @@ app.config["SESSION_PERMANENT"] = False
 app.config["SESSION_TYPE"] = "filesystem"
 Session(app)
 
+# postgres://qszjzfyfycymmb:b8e925ef3948e3573262de3898981adb988c357159ecc20de19d11f842ff84bd@ec2-63-32-248-14.eu-west-1.compute.amazonaws.com:5432/d1ugqh51mo7jpt
 # Configure CS50 Library to use SQLite database
 db = SQL("sqlite:///sessions.db")
-
+# pgloader --no-ssl-cert-verification sessions.db postgresql://qszjzfyfycymmb:b8e925ef3948e3573262de3898981adb988c357159ecc20de19d11f842ff84bd@ec2-63-32-248-14.eu-west-1.compute.amazonaws.com:5432/d1ugqh51mo7jpt?sslmode=require
 # export API_KEY=value
 # Make sure API key is set
 # if not os.environ.get("API_KEY"):
@@ -106,7 +110,7 @@ def join_session(this_route="/join_session"):
             return insert_flash(this_route,"invalid session name", 403)
 
         # query database for session_id
-        search = db.execute("SELECT * FROM sessions WHERE (session_id = ?) and (session_name = ?)", SID, SName)
+        search = db.execute(f"SELECT * FROM {SESSIONS} WHERE (session_id = ?) and (session_name = ?)", SID, SName)
 
         # checks the validity of the search query
         if len(search) != 1:
@@ -150,8 +154,9 @@ def new_session(this_route="/new_session", code=200):
             return insert_flash(this_route, "Please Enter a valid Session Name")
 
         # creates a new session with the given name and an unused id
-        SID = get_unused_id_from("sessions")
-        db.execute("INSERT INTO sessions (session_name, session_id) VALUES(?,?)", SName, SID)
+        db.execute(f"INSERT INTO {SESSIONS} (session_name) VALUES(?)", SName)
+        SID = db.execute(f"SELECT MAX(session_id) FROM {SESSIONS}")[0].get('MAX(session_id)', 0)
+
         session["session_id"] = SID
         session["session_name"] = SName
         session["people"] = {}
@@ -178,7 +183,7 @@ def del_calendar():
 
             # remove each person in the to_delete list from the cached session and the session's database
             session["people"].pop(person.id)
-            db.execute("DELETE FROM session_users WHERE (user_id = ?) and (session_id = ?)", person.id, session["session_id"])
+            db.execute(f"DELETE FROM {SESSION_USERS} WHERE (user_id = ?) and (session_id = ?)", person.id, session["session_id"])
 
         # check to make sure the data update was done correctly
         db_people = get_people()
@@ -216,7 +221,7 @@ def add_calendar(this_route="/add_calendar"):
             except:
                 return insert_flash(this_route, "That's not a valid user!")
 
-            person = db.execute("SELECT * FROM users WHERE (user_id = ?) and (user_name = ?)", CalID, CalName)
+            person = db.execute(f"SELECT * FROM {USERS} WHERE (user_id = ?) and (user_name = ?)", CalID, CalName)
 
             # if one specific entry was not found or is already in the room, prompt the user again
             if len(person) != 1:
@@ -230,13 +235,15 @@ def add_calendar(this_route="/add_calendar"):
                 person = person[0]
                 new_person = Calendar().load(person)
         else:# if he doesnt
-            new_person = Calendar(name=CalName, schedule={}, id=get_unused_id_from("users"))
-            db.execute("INSERT INTO users (user_id, user_name, user_schedule, user_color) VALUES(?,?,?,?)", new_person.id, new_person.name, dumps(new_person.schedule), new_person.color)
+            new_person = Calendar(name=CalName, schedule={})
+            db.execute(f"INSERT INTO {USERS} (user_name, user_schedule, user_color) VALUES(?,?,?)", new_person.name, dumps(new_person.schedule), new_person.color)
+            new_person = Calendar().load(SQL_query=db.execute(f"SELECT * FROM {USERS} ORDER BY user_id DESC LIMIT 1"))
 
         # add new person to the list of people in this session
         session["people"][new_person.id] = new_person
         session["active_people"].append(new_person)
-        db.execute("INSERT INTO session_users (session_id, user_id, user_name) VALUES(?,?,?)", session["session_id"], new_person.id, new_person.name)
+        print(SESSION_USERS)
+        db.execute(f"INSERT INTO {SESSION_USERS} (session_id, user_id, user_name) VALUES(?,?,?)", session["session_id"], new_person.id, new_person.name)
         return redirect(f"/calendar_info/{new_person.name}/{new_person.id}")
 
     return render_template("add_calendar.html")
@@ -270,7 +277,7 @@ def Calendar_info(PName, PID):
             person.color = request.form.get('myColor')
 
         # update database
-        db.execute("UPDATE users SET user_schedule = ?, user_color = ? WHERE user_id = ?", dumps(person.schedule), person.color, person.id)
+        db.execute(f"UPDATE {USERS} SET user_schedule = ?, user_color = ? WHERE user_id = ?", dumps(person.schedule), person.color, person.id)
         # feedback message to confirm with user
         flash(f"{person.name} has been updated!")
     return render_template("calendar_info.html", person=person, days=days, colors=colors, custom_color="D32AE1")
@@ -279,7 +286,7 @@ def Calendar_info(PName, PID):
 # gets the list of calendars in the current session
 def get_people():
     # get raw data on people
-    people = db.execute("SELECT * FROM users WHERE user_id IN (SELECT user_id FROM session_users WHERE session_id = ?)", session["session_id"])
+    people = db.execute(f"SELECT * FROM {USERS} WHERE user_id IN (SELECT user_id FROM {SESSION_USERS} WHERE session_id = ?)", session["session_id"])
 
     # convert raw data into a list of Calendar objects
     people = list(map(lambda person: Calendar().load(person), people))
@@ -287,28 +294,30 @@ def get_people():
     # convert list of objects into a dictionary {id:object}
     if people:
         return {person.id:person for person in people}
+    else:
+        return {}
 
-def get_unused_id_from(location:str):
-    match location:
-        case "sessions":
-            lookfor = "session"
-        case "users":
-            lookfor = "user"
-        case _:
-            return 0
+# def get_unused_id_from(location:str):
+#     match location:
+#         case f"{SESSIONS}":
+#             lookfor = "session"
+#         case f"{USERS}":
+#             lookfor = "user"
+#         case _:
+#             return 0
 
-    column_names = db.execute("SELECT * FROM ? LIMIT 1", location)[0].keys()
+#     column_names = db.execute("SELECT * FROM ? LIMIT 1", location)[0].keys()
 
-    id_column = f"{lookfor}_id"
-    name_column = f"{lookfor}_name"
+#     id_column = f"{lookfor}_id"
+#     name_column = f"{lookfor}_name"
 
-    if not (id_column in column_names and name_column in column_names):
-        return apology("did you change the database names, dummy?", 403)
+#     if not (id_column in column_names and name_column in column_names):
+#         return apology("did you change the database names, dummy?", 403)
 
-    empty_spot = db.execute(f"SELECT {id_column} FROM {location} WHERE {name_column}='__badname__' LIMIT 1")
-    if empty_spot:
-        return empty_spot[0]
-    return (db.execute(f"SELECT MAX({id_column}) FROM {location}")[0].get(f'MAX({id_column})', 0) + 1)
+#     empty_spot = db.execute(f"SELECT {id_column} FROM {location} WHERE {name_column}='__badname__' LIMIT 1")
+#     if empty_spot:
+#         return empty_spot[0]
+#     return (db.execute(f"SELECT MAX({id_column}) FROM {location}")[0].get(f'MAX({id_column})', 0) + 1)
 
 def insert_flash(this_route='/', message="page refreshed", code=0):
     flash(message)

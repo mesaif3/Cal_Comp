@@ -27,8 +27,27 @@ db = SQL("sqlite:///sessions.db")
 
 def main():
 
-    db.execute("INSERT INTO sessions (session_name) VALUES('joe jonas')")
-    print()
+    # db.execute("DROP TABLE session_users2")
+    # db.execute("DROP TABLE sessions2")
+    # db.execute("DROP TABLE users2")
+    db.execute("DROP TABLE session_users2")
+    db.execute("DROP TABLE sessions2")
+    db.execute("DROP TABLE users2")
+
+    db.execute("CREATE TABLE sessions (session_id INTEGER PRIMARY KEY AUTOINCREMENT, session_name TEXT NOT NULL)")
+
+    db.execute("CREATE TABLE users (user_id INTEGER PRIMARY KEY AUTOINCREMENT, user_name TEXT NOT NULL, user_schedule TEXT NOT NULL, user_color VARCHAR(20))")
+
+    db.execute("CREATE TABLE session_users (session_id INTEGER REFERENCES sessions2(session_id) ON UPDATE CASCADE ON DELETE CASCADE, user_id INTEGER REFERENCES users(user_id) ON UPDATE CASCADE ON DELETE CASCADE, user_name TEXT NOT NULL, PRIMARY KEY (session_id, user_id))")
+
+
+
+    # db.execute("INSERT INTO sessions2 (session_id, session_name) SELECT session_id, session_name FROM sessions")
+
+    # db.execute("INSERT INTO users2 (user_id, user_name, user_schedule, user_color) SELECT user_id, user_name, user_schedule, user_color FROM users")
+
+    # db.execute("INSERT INTO session_users2 (session_id, user_id, user_name) SELECT session_id, user_id, user_name FROM sessions session_users")
+
 def get_unused_id_from(location:str):
     match location:
         case "sessions":

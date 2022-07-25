@@ -61,7 +61,7 @@ Log In
                 <table class="mx-auto" style="width: 100%">
                     <tr>
                 {% for id in who_is_busy_id %}
-                <td class="btn-{{ session['people'][id|int].color }}" style="border: none">{{ session['people'][id|int].name[0:2] }}</td>
+                <td class="btn-{{ session['people'][id|int].color }}" style="border: none">{{ session['people'][id|int].name }}</td>
                 {% endfor %}</tr>
                 </table>
             </td>

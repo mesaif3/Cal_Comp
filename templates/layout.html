@@ -6,7 +6,7 @@
 
     {% block javascript %}{% endblock %}
     {% block dynamic_css %}{% endblock %}
-    
+
     <meta charset="utf-8">
     <meta name="viewport" content="initial-scale=1, width=device-width">
 
@@ -45,7 +45,7 @@
                 {% set people = (session["people"].values() if session["people"] else None) %}
                 {% if people %}
                 {% for person in people %}
-                <li class="nav-item"><a class="nav-link" href={{ ["/calendar_info", person.name, person.id]|join("/") }}>{{ person.name }}</a></li>
+                <li class="nav-item"><a class="nav-link" href='{{ ["/calendar_info", person.name, person.id]|join("/") }}'>{{ person.name }}</a></li>
                 {% endfor %}
                 {% endif %}
             </ul>

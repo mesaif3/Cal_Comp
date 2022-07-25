@@ -134,7 +134,7 @@ Log In
 {% block main_no_scroll_up %}
 
 
-<form action={{["/calendar_info/", person.name, person.id]|join("/")}} method="post">
+<form action='{{["/calendar_info", person.name, person.id]|join("/")}}' method="post">
     <button class="btn btn-success" type="submit">save</button>
 
     <div onclick="clear_schedule()" class="btn btn-danger">clear</div>
