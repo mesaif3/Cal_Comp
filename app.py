@@ -1,10 +1,12 @@
 import os
+import psycopg2
 
 from json import loads, dumps
 from cs50 import SQL
 from flask import Flask, flash, redirect, render_template, request, session
 from flask_session import Session
 from tempfile import mkdtemp
+from sqlalchemy import true
 from werkzeug.exceptions import default_exceptions, HTTPException, InternalServerError
 from werkzeug.security import check_password_hash, generate_password_hash
 
@@ -41,16 +43,17 @@ def after_request(response):
 
 # Configure session to use filesystem (instead of signed cookies)
 app.config["SESSION_FILE_DIR"] = mkdtemp()
-app.config["SESSION_PERMANENT"] = False
+app.config["SESSION_PERMANENT"] = True
 app.config["SESSION_TYPE"] = "filesystem"
 Session(app)
 
 # postgres://qszjzfyfycymmb:b8e925ef3948e3573262de3898981adb988c357159ecc20de19d11f842ff84bd@ec2-63-32-248-14.eu-west-1.compute.amazonaws.com:5432/d1ugqh51mo7jpt
 # Configure CS50 Library to use SQLite database
-uri = os.getenv("DATABASE_URL")
+uri = os.environ.get("DATABASE_URI")
 if uri.startswith("postgres://"):
     uri = uri.replace("postgres://", "postgresql://")
 db = SQL(uri)
+
 # pgloader --no-ssl-cert-verification sessions.db postgresql://qszjzfyfycymmb:b8e925ef3948e3573262de3898981adb988c357159ecc20de19d11f842ff84bd@ec2-63-32-248-14.eu-west-1.compute.amazonaws.com:5432/d1ugqh51mo7jpt?sslmode=require
 # export API_KEY=value
 # Make sure API key is set
