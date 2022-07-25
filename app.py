@@ -19,9 +19,9 @@ Todo:
 5) custom colors
 """
 
-SESSIONS = "sessions2"
-USERS = "users2"
-SESSION_USERS = "session_users2"
+SESSIONS = "sessions"
+USERS = "users"
+SESSION_USERS = "session_users"
 
 # Configure application
 app = Flask(__name__)
@@ -47,7 +47,10 @@ Session(app)
 
 # postgres://qszjzfyfycymmb:b8e925ef3948e3573262de3898981adb988c357159ecc20de19d11f842ff84bd@ec2-63-32-248-14.eu-west-1.compute.amazonaws.com:5432/d1ugqh51mo7jpt
 # Configure CS50 Library to use SQLite database
-db = SQL("sqlite:///sessions.db")
+uri = os.getenv("DATABASE_URL")
+if uri.startswith("postgres://"):
+    uri = uri.replace("postgres://", "postgresql://")
+db = SQL(uri)
 # pgloader --no-ssl-cert-verification sessions.db postgresql://qszjzfyfycymmb:b8e925ef3948e3573262de3898981adb988c357159ecc20de19d11f842ff84bd@ec2-63-32-248-14.eu-west-1.compute.amazonaws.com:5432/d1ugqh51mo7jpt?sslmode=require
 # export API_KEY=value
 # Make sure API key is set
