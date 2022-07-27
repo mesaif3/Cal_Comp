@@ -136,8 +136,6 @@ def logout():
 @app.route("/new_session", methods=["GET", "POST"])
 def new_session(this_route="/new_session", code=200):
 
-    all_people = get_people()
-
     if request.method == "POST":
 
         SName = request.form.get("session_name")
@@ -296,6 +294,9 @@ def Calendar_info(PName, PID):
 
 # gets the list of calendars in the current session
 def get_people():
+    if not session["session_id"]:
+        return {}
+        
     # get raw data on people
     people = db.execute(f"SELECT * FROM {USERS} WHERE user_id IN (SELECT user_id FROM {SESSION_USERS} WHERE session_id = ?) ORDER BY user_id ASC", session["session_id"])
 
