@@ -29,44 +29,17 @@ SESSION_USERS = "session_users"
 # Configure application
 app = Flask(__name__)
 
-app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
+app.secret_key = os.environ.get("secret_key")
+app.secret_key = os.environ.get("secret_key")
 
 # Ensure templates are auto-reloaded
 app.config["TEMPLATES_AUTO_RELOAD"] = True
 
-
-
-
-
-# postgres://qszjzfyfycymmb:b8e925ef3948e3573262de3898981adb988c357159ecc20de19d11f842ff84bd@ec2-63-32-248-14.eu-west-1.compute.amazonaws.com:5432/d1ugqh51mo7jpt
 # Configure CS50 Library to use SQLite database
 uri = os.environ.get("DATABASE_URL")
 if uri.startswith("postgres://"):
     uri = uri.replace("postgres://", "postgresql://")
 db = SQL(uri)
-
-# Configure session to use filesystem (instead of signed cookies)
-# app.config["SESSION_FILE_DIR"] = mkdtemp()
-# # app.config["SESSION_PERMANENT"] = False
-# app.config['SQLALCHEMY_DATABASE_URI'] = uri
-# app.config["SESSION_TYPE"] = "sqlalchemy"
-# app.config['SESSION_SQLALCHEMY_TABLE'] = 'active_sessions'
-# app.config["PERMANENT_SESSION_LIFETIME"] = 30
-# app.secret_key ='d5fb8c4fa8bd46638dadc4e751e0d68d'
-# app.config["SESSION_TYPE"] = "mongodb"
-# app.config["SESSION_MONGODB_DB"] = "cal-comp-active-sessions"
-# app.config["SESSION_MONGODB_COLLECT"] = "active-sessions"
-
-# client = pymongo.MongoClient(f"mongodb+srv://test:{os.environ.get('password')}@cluster0.inuxrom.mongodb.net/?retryWrites=true&w=majority")
-# db = client.test
-
-# Session(app)
-
-# pgloader --no-ssl-cert-verification sessions.db postgresql://qszjzfyfycymmb:b8e925ef3948e3573262de3898981adb988c357159ecc20de19d11f842ff84bd@ec2-63-32-248-14.eu-west-1.compute.amazonaws.com:5432/d1ugqh51mo7jpt?sslmode=require
-# export API_KEY=value
-# Make sure API key is set
-# if not os.environ.get("API_KEY"):
-#     raise RuntimeError("API_KEY not set")
 
 @app.route("/",methods=["GET","POST"])
 @session_required
@@ -318,7 +291,7 @@ def Calendar_info(PName, PID):
         db.execute(f"UPDATE {USERS} SET user_schedule = ?, user_color = ? WHERE user_id = ?", dumps(person.schedule), person.color, person.id)
         # feedback message to confirm with user
         flash(f"{person.name} has been updated!")
-    return render_template("calendar_info.html", all_people=all_people, person=person, days=days, colors=colors, custom_color="D32AE1")
+    return render_template("calendar_info.html", all_people=all_people, person=person, days=days, colors=colors) #, custom_color="D32AE1"
 
 
 # gets the list of calendars in the current session

@@ -175,7 +175,9 @@ Log In
         {% for color in colors %}
         <div onclick="changeColor('{{color}}')" class="btn btn-{{color}} col-1 empty-button" type="button" style="min-height: 40px"></div>
         {% endfor %}
+        {% if custom_color %}
         <div onclick="changeColor('{{custom_color}}')" class="btn btn-{{custom_color}} col-1 " type="button" style="min-height: 40px"></div>
+        {% endif %}
     </div>
 
     <div class="form-group">
