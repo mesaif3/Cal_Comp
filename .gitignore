@@ -6,3 +6,5 @@ application.txt
 sessions(backup).db
 sessions
 sql_database_setup.py
+main.py
+flask_session

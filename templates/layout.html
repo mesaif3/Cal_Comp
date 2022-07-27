@@ -42,12 +42,9 @@
         <div class="collapse navbar-collapse" id="navbar">
             {% if session.session_id %}
             <ul class="navbar-nav mr-auto mt-2">
-                {% set people = (session["people"].values() if session["people"] else None) %}
-                {% if people %}
-                {% for person in people %}
+                {% for person in all_people.values() %}
                 <li class="nav-item"><a class="nav-link" href='{{ ["/calendar_info", person.name, person.id]|join("/") }}'>{{ person.name }}</a></li>
                 {% endfor %}
-                {% endif %}
             </ul>
             <ul class="navbar-nav ml-auto mt-2">
                 <li class="nav-item"><a class="nav-link" href="/add_calendar">Add New Person</a></li>

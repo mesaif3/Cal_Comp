@@ -7,7 +7,7 @@ Log In
 {% block javascript%}
     <script>
         function initialize(){
-            {% for person in people %} // checking the box for {{person}}
+            {% for person in active_people %} // checking the box for {{person}}
             document.querySelector("input[value='{{person.id}}']").checked = true;
             {% endfor %}
         }
@@ -33,7 +33,7 @@ Log In
     <label>Choose which people's schedules to view!</label>
     <div class="form-group">
         <div class="btn=group btn-group-toggle" data-toggle="buttons">
-            {% for person in session['people'].values() %}
+            {% for person in all_people.values() %}
             <label class="btn btn-outline-{{person.color}}">
               <input type="checkbox" value="{{person.id}}" name="to_show" autocomplete="off"> {{person.name}}
             </label>
@@ -61,7 +61,7 @@ Log In
                 <table class="mx-auto" style="width: 100%">
                     <tr>
                 {% for id in who_is_busy_id %}
-                <td class="btn-{{ session['people'][id|int].color }}" style="border: none">{{ session['people'][id|int].name }}</td>
+                <td class="btn-{{ all_people[id|int].color }}" style="border: none">{{ all_people[id|int].name }}</td>
                 {% endfor %}</tr>
                 </table>
             </td>

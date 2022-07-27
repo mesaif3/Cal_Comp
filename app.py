@@ -1,5 +1,6 @@
 import os
 import psycopg2
+import pymongo
 
 from json import loads, dumps
 from cs50 import SQL
@@ -21,6 +22,7 @@ Todo:
 5) custom colors
 """
 
+
 SESSIONS = "sessions"
 USERS = "users"
 SESSION_USERS = "session_users"
@@ -28,16 +30,14 @@ SESSION_USERS = "session_users"
 # Configure application
 app = Flask(__name__)
 
+app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
+
 # Ensure templates are auto-reloaded
 app.config["TEMPLATES_AUTO_RELOAD"] = True
 
 
 
-# Configure session to use filesystem (instead of signed cookies)
-app.config["SESSION_FILE_DIR"] = mkdtemp()
-app.config["SESSION_PERMANENT"] = False
-app.config["SESSION_TYPE"] = "filesystem"
-Session(app)
+
 
 # postgres://qszjzfyfycymmb:b8e925ef3948e3573262de3898981adb988c357159ecc20de19d11f842ff84bd@ec2-63-32-248-14.eu-west-1.compute.amazonaws.com:5432/d1ugqh51mo7jpt
 # Configure CS50 Library to use SQLite database
@@ -45,6 +45,23 @@ uri = os.environ.get("DATABASE_URL")
 if uri.startswith("postgres://"):
     uri = uri.replace("postgres://", "postgresql://")
 db = SQL(uri)
+
+# Configure session to use filesystem (instead of signed cookies)
+# app.config["SESSION_FILE_DIR"] = mkdtemp()
+# # app.config["SESSION_PERMANENT"] = False
+# app.config['SQLALCHEMY_DATABASE_URI'] = uri
+# app.config["SESSION_TYPE"] = "sqlalchemy"
+# app.config['SESSION_SQLALCHEMY_TABLE'] = 'active_sessions'
+# app.config["PERMANENT_SESSION_LIFETIME"] = 30
+# app.secret_key ='d5fb8c4fa8bd46638dadc4e751e0d68d'
+# app.config["SESSION_TYPE"] = "mongodb"
+# app.config["SESSION_MONGODB_DB"] = "cal-comp-active-sessions"
+# app.config["SESSION_MONGODB_COLLECT"] = "active-sessions"
+
+# client = pymongo.MongoClient(f"mongodb+srv://test:{os.environ.get('password')}@cluster0.inuxrom.mongodb.net/?retryWrites=true&w=majority")
+# db = client.test
+
+# Session(app)
 
 # pgloader --no-ssl-cert-verification sessions.db postgresql://qszjzfyfycymmb:b8e925ef3948e3573262de3898981adb988c357159ecc20de19d11f842ff84bd@ec2-63-32-248-14.eu-west-1.compute.amazonaws.com:5432/d1ugqh51mo7jpt?sslmode=require
 # export API_KEY=value
@@ -55,13 +72,10 @@ db = SQL(uri)
 @app.route("/",methods=["GET","POST"])
 @session_required
 def index():
-    # returns a combined calendar
-    # session["session_id"] = 1243
-    # session["session_name"] = "test"
-    session["people"] = get_people()
-    # if not session.get("active_people",None):
-    #     session["active_people"] = list(session["people"].values())
 
+    all_people = get_people()
+
+    # function to combine all people into a single calendar
     def combine(people):
         combined = Calendar()
 
@@ -72,15 +86,19 @@ def index():
             combined += person
         return combined
 
+    # display the chosen combined calendar 
     if request.method == "POST":
-        id_list = request.form.getlist('to_show')
-        session["active_people"] = []
-        for id in id_list:
-            session["active_people"].append(session['people'][int(id)])
+        session["active_ids"] = list(map(int, request.form.getlist('to_show')))
+        active_people = [all_people[id] for id in session.get("active_ids")]
 
-        return render_template("index.html", people=session["active_people"], combined=combine(session["active_people"]),  days=days) ### id_people_dict=session['people'], removed
+        # feedback for the user
+        flash("The calendar has been updated!")
 
-    return render_template("index.html", people=session["active_people"], combined=combine(session["active_people"]),  days=days) ### id_people_dict=session['people'], removed
+        return render_template("index.html", all_people=all_people, active_people=active_people, combined=combine(active_people),  days=days) ### id_people_dict=session['people'], removed
+    
+    else:
+        active_people = [all_people[id] for id in session.get("active_ids",[])]
+        return render_template("index.html", all_people=all_people, active_people=active_people, combined=combine(active_people),  days=days) ### id_people_dict=session['people'], removed
 
 
 # A page to prompt the user for a session ID to join
@@ -114,16 +132,11 @@ def join_session(this_route="/join_session"):
         if len(search) != 1:
             return insert_flash(this_route,"session id not found", 403)
 
-        # Remember which user has logged in
+        # Remember to which session user has logged in
         session["session_id"] = SID
         session["session_name"] = SName
-        session["people"] = get_people()
-        session["active_people"] = list(session["people"].values())
-        print(session["session_id"])
-        print(session["session_name"])
-        print(session["people"])
-        print(session["active_people"])
-        
+        session["active_ids"] = list(get_people().keys())
+
         # Redirect user to home page
         return redirect("/")
 
@@ -140,6 +153,9 @@ def logout():
     # Forget any user_id
     session.clear()
 
+    # Confirm logging out
+    flash("You have logged out successfully!")
+
     # Redirect user to login form
     return redirect("/")
 
@@ -147,6 +163,8 @@ def logout():
 # prompts the user for a name and id to create a new session
 @app.route("/new_session", methods=["GET", "POST"])
 def new_session(this_route="/new_session", code=200):
+
+    all_people = get_people()
 
     if request.method == "POST":
 
@@ -169,15 +187,10 @@ def new_session(this_route="/new_session", code=200):
             print(db.execute(f"SELECT * FROM {SESSION_USERS} WHERE (session_id=?)",SID))
             return apology("error in creating session", 403)
 
+        # initialize the session cookie
         session["session_id"] = SID
         session["session_name"] = SName
-        session["people"] = {}
-        session["active_people"] = []
-        
-        print(session["session_id"]   )
-        print(session["session_name"]  )
-        print(session["people"]       )
-        print(session["active_people"] )
+        session["active_ids"] = []
 
         return redirect("/")
     return render_template("new_session.html"), code
@@ -185,6 +198,8 @@ def new_session(this_route="/new_session", code=200):
 @app.route("/del_calendar", methods=["POST", "GET"])
 @session_required
 def del_calendar():
+
+    all_people = get_people()
 
     if request.method == "POST":
         # get a list of things to delete
@@ -196,26 +211,29 @@ def del_calendar():
 
         # re-format the to_delete list into their objects ###(could be id's instead i think)
         for person in to_delete:
-            person = session["people"][int(person.split("#")[1])]
+            id_to_delete = int(person.split("#")[1])
+            person = all_people[id_to_delete]
+
+            # QOL: remove from active list             
+            if id_to_delete in session["active_ids"]:
+                session["active_ids"].remove(id_to_delete)
 
             # remove each person in the to_delete list from the cached session and the session's database
-            session["people"].pop(person.id)
+            all_people.pop(person.id)
             db.execute(f"DELETE FROM {SESSION_USERS} WHERE (user_id = ?) and (session_id = ?)", person.id, session["session_id"])
 
         # check to make sure the data update was done correctly
         db_people = get_people()
-        for id in set().union(session["people"].keys(),db_people.keys()):
-            if session["people"][id] != db_people[id]:
+        for id in set().union(all_people.keys(),db_people.keys()):
+            if all_people[id] != db_people[id]:
                 return apology("UH OH! editing the data failed")
 
-
-        session["active_people"] = list(session["people"].values())
         # confirm to the user that the people were removed
         flash(f"{[person for person in to_delete]} {'was' if len(to_delete) == 1 else 'were'} removed from the room!")
         return redirect("/")
 
     # renders the page to remove users from the room
-    return render_template("del_calendar.html")
+    return render_template("del_calendar.html", all_people=all_people)
 
 
 # prompts the user for a name to create a new calendar with that name
@@ -223,7 +241,10 @@ def del_calendar():
 @session_required
 def add_calendar(this_route="/add_calendar"):
 
+    all_people = get_people()
+
     if request.method == "POST":
+        # fetch the name of the new user 
         CalName = request.form.get("calendar_name")
 
         # Ensure a name was written
@@ -238,32 +259,31 @@ def add_calendar(this_route="/add_calendar"):
             except:
                 return insert_flash(this_route, "That's not a valid user!")
 
+            # searches the database for the user
             person = db.execute(f"SELECT * FROM {USERS} WHERE (user_id = ?) and (user_name = ?)", CalID, CalName)
 
             # if one specific entry was not found or is already in the room, prompt the user again
             if len(person) != 1:
                 return insert_flash(this_route,"User not found :(")
 
-            elif CalID in list(session["people"].keys()):
+            elif CalID in list(all_people.keys()):
                 return insert_flash(this_route, "This user is already in the room!")
 
         # Assemple a new object for the person
             else: #if he exists
                 person = person[0]
                 new_person = Calendar().load(person)
-        else:# if he doesnt
+        else:# if they dont
             new_person = Calendar(name=CalName, schedule={})
             db.execute(f"INSERT INTO {USERS} (user_name, user_schedule, user_color) VALUES(?,?,?)", new_person.name, dumps(new_person.schedule), new_person.color)
             new_person = Calendar().load(SQL_query=db.execute(f"SELECT * FROM {USERS} ORDER BY user_id DESC LIMIT 1"))
 
         # add new person to the list of people in this session
-        session["people"][new_person.id] = new_person
-        session["active_people"].append(new_person)
-        print(SESSION_USERS)
+        session["active_ids"] += [new_person.id]
         db.execute(f"INSERT INTO {SESSION_USERS} (session_id, user_id, user_name) VALUES(?,?,?)", session["session_id"], new_person.id, new_person.name)
         return redirect(f"/calendar_info/{new_person.name}/{new_person.id}")
 
-    return render_template("add_calendar.html")
+    return render_template("add_calendar.html", all_people=all_people)
 
 
 # displays the calendar of the chosen name
@@ -271,7 +291,9 @@ def add_calendar(this_route="/add_calendar"):
 @session_required
 def Calendar_info(PName, PID):
 
-    person = session["people"].get(PID, None)
+    all_people = get_people()
+
+    person = all_people.get(PID, None)
 
     # looks for the person through the session
     if not person:
@@ -297,13 +319,13 @@ def Calendar_info(PName, PID):
         db.execute(f"UPDATE {USERS} SET user_schedule = ?, user_color = ? WHERE user_id = ?", dumps(person.schedule), person.color, person.id)
         # feedback message to confirm with user
         flash(f"{person.name} has been updated!")
-    return render_template("calendar_info.html", person=person, days=days, colors=colors, custom_color="D32AE1")
+    return render_template("calendar_info.html", all_people=all_people, person=person, days=days, colors=colors, custom_color="D32AE1")
 
 
 # gets the list of calendars in the current session
 def get_people():
     # get raw data on people
-    people = db.execute(f"SELECT * FROM {USERS} WHERE user_id IN (SELECT user_id FROM {SESSION_USERS} WHERE session_id = ?)", session["session_id"])
+    people = db.execute(f"SELECT * FROM {USERS} WHERE user_id IN (SELECT user_id FROM {SESSION_USERS} WHERE session_id = ?) ORDER BY user_id ASC", session["session_id"])
 
     # convert raw data into a list of Calendar objects
     people = list(map(lambda person: Calendar().load(person), people))
@@ -314,28 +336,6 @@ def get_people():
     else:
         return {}
 
-# def get_unused_id_from(location:str):
-#     match location:
-#         case f"{SESSIONS}":
-#             lookfor = "session"
-#         case f"{USERS}":
-#             lookfor = "user"
-#         case _:
-#             return 0
-
-#     column_names = db.execute("SELECT * FROM ? LIMIT 1", location)[0].keys()
-
-#     id_column = f"{lookfor}_id"
-#     name_column = f"{lookfor}_name"
-
-#     if not (id_column in column_names and name_column in column_names):
-#         return apology("did you change the database names, dummy?", 403)
-
-#     empty_spot = db.execute(f"SELECT {id_column} FROM {location} WHERE {name_column}='__badname__' LIMIT 1")
-#     if empty_spot:
-#         return empty_spot[0]
-#     return (db.execute(f"SELECT MAX({id_column}) FROM {location}")[0].get(f'MAX({id_column})', 0) + 1)
-
 def insert_flash(this_route='/', message="page refreshed", code=0):
     flash(message)
     return redirect(this_route)
@@ -345,7 +345,6 @@ def errorhandler(e):
     if not isinstance(e, HTTPException):
         e = InternalServerError()
     return apology(e.name, e.code)
-
 
 # Listen for errors
 for code in default_exceptions:

@@ -10,15 +10,14 @@
         <div>Select the users you wish to remove: </div><br>
         <div class="form-group">
             <div class="btn=group btn-group-toggle" data-toggle="buttons">
-                {% set people = session["people"].values() %}
-                {% for person in people %}
+                {% for person in all_people.values() %}
                 <label class="btn btn-outline-danger">
                   <input type="checkbox" value="{{person}}" name="to_delete" autocomplete="off"> {{person.name}}
                 </label>
                 {% endfor %}
               </div>
         </div>
-        <button class="btn btn-secondary" type="submit">Remove Users</button>
+        <button class="btn btn-secondary" type="submit">Remove User(s) >:(</button>
     </form>
 {% endblock %}
 
