@@ -1,6 +1,5 @@
 import os
 import psycopg2
-import pymongo
 
 from json import loads, dumps
 from cs50 import SQL
