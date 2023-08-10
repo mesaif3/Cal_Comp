@@ -17,7 +17,6 @@ db = SQL(uri)
 db._autocommit=False
 
 
-
 # db.execute("CREATE TABLE sessions (session_id INTEGER NOT NULL, session_name TEXT NOT NULL, PRIMARY KEY (session_id))")
 
 # db.execute("CREATE TABLE users (user_id INTEGER NOT NULL, user_name TEXT NOT NULL, user_schedule TEXT NOT NULL, user_color VARCHAR(20), PRIMARY KEY (user_id))")
