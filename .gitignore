@@ -8,3 +8,6 @@ sessions
 sql_database_setup.py
 main.py
 flask_session
+calcomp.pem
+ec2-database-connect.rdp
+Procfile

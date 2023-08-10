@@ -11,6 +11,8 @@ from werkzeug.exceptions import default_exceptions, HTTPException, InternalServe
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from helpers import apology, session_required, Calendar, days, colors
+from dotenv import load_dotenv
+import re
 
 """
 Todo:
@@ -30,16 +32,19 @@ SESSION_USERS = "session_users"
 app = Flask(__name__)
 
 app.secret_key = os.environ.get("secret_key")
-app.secret_key = os.environ.get("secret_key")
 
 # Ensure templates are auto-reloaded
 app.config["TEMPLATES_AUTO_RELOAD"] = True
 
+
 # Configure CS50 Library to use SQLite database
-uri = os.environ.get("DATABASE_URL")
-if uri.startswith("postgres://"):
-    uri = uri.replace("postgres://", "postgresql://")
-db = SQL(uri)
+uri = os.environ.get("SQLALCHEMY_DATABASE_URI")
+keynames = re.findall("[{](\w*)[}]",uri)
+for key in keynames:
+    uri = re.sub("{"+key+"}", os.environ.get(key), uri)
+db = SQL(uri) 
+db._autocommit=False
+
 
 @app.route("/",methods=["GET","POST"])
 @session_required
