@@ -3,5 +3,5 @@ Flask
 Flask-Session
 requests
 gunicorn
-psycopg2
 pyodbc
+python-dotenv
