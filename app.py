@@ -38,7 +38,7 @@ app.config["TEMPLATES_AUTO_RELOAD"] = True
 
 
 # Configure CS50 Library to use SQLite database
-uri = os.environ.get("SQLALCHEMY_DATABASE_URI")
+uri = os.environ.get("AWS_DATABASE_URL")
 keynames = re.findall("[{](\w*)[}]",uri)
 for key in keynames:
     uri = re.sub("{"+key+"}", os.environ.get(key), uri)
