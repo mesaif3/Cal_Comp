@@ -7,7 +7,7 @@ import re
 
 load_dotenv()
 # Configure CS50 Library to use SQLite database
-uri = os.environ.get("SQLALCHEMY_DATABASE_URI")
+uri = os.environ.get("AWS_DATABASE_URL")
 # print(uri)
 keynames = re.findall("[{](\w*)[}]",uri)
 for key in keynames:
