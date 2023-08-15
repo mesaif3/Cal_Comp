@@ -11,7 +11,6 @@ from werkzeug.exceptions import default_exceptions, HTTPException, InternalServe
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from helpers import apology, session_required, Calendar, days, colors
-from dotenv import load_dotenv
 import re
 
 """
@@ -150,7 +149,7 @@ def new_session(this_route="/new_session", code=200):
 
         # creates a new session with the given name and an unused id
         db.execute(f"INSERT INTO {SESSIONS} (session_name) VALUES(?)", SName)
-        query = db.execute(f"SELECT * FROM {SESSIONS} ORDER BY session_id DESC LIMIT 1")[0]
+        query = db.execute(f"SELECT TOP 1 * FROM {SESSIONS} ORDER BY session_id DESC")[0]
         SID = query['session_id']
         SName2 = query['session_name']
 
@@ -251,7 +250,7 @@ def add_calendar(this_route="/add_calendar"):
         else:# if they dont
             new_person = Calendar(name=CalName, schedule={})
             db.execute(f"INSERT INTO {USERS} (user_name, user_schedule, user_color) VALUES(?,?,?)", new_person.name, dumps(new_person.schedule), new_person.color)
-            new_person = Calendar().load(SQL_query=db.execute(f"SELECT * FROM {USERS} ORDER BY user_id DESC LIMIT 1"))
+            new_person = Calendar().load(SQL_query=db.execute(f"SELECT TOP 1 * FROM {USERS} ORDER BY user_id DESC"))
 
         # add new person to the list of people in this session
         session["active_ids"] += [new_person.id]
