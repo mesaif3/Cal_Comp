@@ -1,14 +1,9 @@
 import os
-import psycopg2
-
 from json import loads, dumps
 from cs50 import SQL
 from flask import Flask, flash, redirect, render_template, request, session
-from flask_session import Session
-from tempfile import mkdtemp
 from sqlalchemy import true
 from werkzeug.exceptions import default_exceptions, HTTPException, InternalServerError
-from werkzeug.security import check_password_hash, generate_password_hash
 
 from helpers import apology, session_required, Calendar, days, colors
 import re
