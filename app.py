@@ -8,6 +8,7 @@ from werkzeug.exceptions import default_exceptions, HTTPException, InternalServe
 from helpers import apology, session_required, Calendar, days, colors
 import re
 
+
 """
 Todo:
 1) select which calendars you want to see #done
@@ -32,7 +33,7 @@ app.config["TEMPLATES_AUTO_RELOAD"] = True
 
 
 # Configure CS50 Library to use SQLite database
-uri = os.environ.get("AWS_DATABASE_URL")
+uri = os.environ.get("AWS_DATABASE_URL").strip("'")
 keynames = re.findall("[{](\w*)[}]",uri)
 for key in keynames:
     uri = re.sub("{"+key+"}", os.environ.get(key), uri)
