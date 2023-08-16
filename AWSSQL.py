@@ -32,6 +32,7 @@ db._autocommit=False
 saif = Calendar({}, name="Saif", id=1)
 julie = Calendar({}, name="Julie", id=2)
 alice = Calendar({"Friday": {"10": "Alice", "11": "Alice", "12": "Alice", "13": "Alice", "5": "Alice", "6": "Alice", "7": "Alice", "8": "Alice", "9": "Alice"}, "Monday": {"10": "Alice", "6": "Alice", "7": "Alice", "8": "Alice", "9": "Alice"}, "Saturday": {"10": "Alice", "11": "Alice", "5": "Alice", "6": "Alice", "7": "Alice", "8": "Alice", "9": "Alice"}, "Sunday": {"10": "Alice", "6": "Alice", "7": "Alice", "8": "Alice", "9": "Alice"}, "Thursday": {"10": "Alice", "11": "Alice", "12": "Alice", "13": "Alice", "14": "Alice", "6": "Alice", "7": "Alice", "8": "Alice", "9": "Alice"}, "Tuesday": {"10": "Alice", "11": "Alice", "5": "Alice", "6": "Alice", "7": "Alice", "8": "Alice", "9": "Alice"}, "Wednesday": {"10": "Alice", "11": "Alice", "12": "Alice", "13": "Alice", "5": "Alice", "6": "Alice", "7": "Alice", "8": "Alice", "9": "Alice"}}, "Alice", id=3)
+julei = Calendar({}, name="Juile", id=10)
 
 # saif.load("calendars/cal_2.csv")
 # julie.load("calendars/cal_short.csv")
@@ -51,6 +52,10 @@ db.execute("SET IDENTITY_INSERT users ON")
 for id in ['2']:
     for person in sess_id[id]["people"]:
         db.execute("INSERT INTO users (user_id, user_name, user_schedule, user_color) VALUES(?,?,?,?)", person.id, person.name, dumps(person.schedule), person.color)
+
+for person in [julei]:
+    db.execute("INSERT INTO users (user_id, user_name, user_schedule, user_color) VALUES(?,?,?,?)", person.id, person.name, dumps(person.schedule), person.color)
+
 db.execute("SET IDENTITY_INSERT users OFF")
 
 for id in list(sess_id.keys()):
