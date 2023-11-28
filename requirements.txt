@@ -3,6 +3,6 @@ Flask
 Flask-Session
 requests
 gunicorn
-libpq-dev
+psycopg2-binary
 psycopg2
 mysql-connector-python
