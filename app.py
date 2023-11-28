@@ -1,16 +1,13 @@
 import os
-import psycopg2
-
 from json import loads, dumps
 from cs50 import SQL
 from flask import Flask, flash, redirect, render_template, request, session
-from flask_session import Session
-from tempfile import mkdtemp
 from sqlalchemy import true
 from werkzeug.exceptions import default_exceptions, HTTPException, InternalServerError
-from werkzeug.security import check_password_hash, generate_password_hash
 
 from helpers import apology, session_required, Calendar, days, colors
+import re
+
 
 """
 Todo:
@@ -30,23 +27,25 @@ SESSION_USERS = "session_users"
 app = Flask(__name__)
 
 app.secret_key = os.environ.get("secret_key")
-app.secret_key = os.environ.get("secret_key")
 
 # Ensure templates are auto-reloaded
 app.config["TEMPLATES_AUTO_RELOAD"] = True
 
+
 # Configure CS50 Library to use SQLite database
-uri = os.environ.get("DATABASE_URL")
-if uri.startswith("postgres://"):
-    uri = uri.replace("postgres://", "postgresql://")
-db = SQL(uri)
+uri = os.environ.get("DB_URL").strip("'")
+keynames = re.findall("[{](\w*)[}]",uri)
+for key in keynames:
+    uri = re.sub("<"+key+">", os.environ.get(key), uri)
+db = SQL(uri) 
+db._autocommit=False
+
 
 @app.route("/",methods=["GET","POST"])
 @session_required
 def index():
 
     all_people = get_people()
-
     # function to combine all people into a single calendar
     def combine(people):
         combined = Calendar()
@@ -322,3 +321,6 @@ def errorhandler(e):
 # Listen for errors
 for code in default_exceptions:
     app.errorhandler(code)(errorhandler)
+
+if __name__ == '__main__':
+    app.run(debug=False, host="0.0.0.0",port=8080)
