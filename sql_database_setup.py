@@ -23,16 +23,22 @@ from helpers import Calendar, apology
         PRIMARY KEY(session_id, user_id)
         );
 """
-db = SQL("sqlite:///sessions.db")
+import firebase_admin
+from firebase_admin import credentials,firestore
+
+cred = credentials.Certificate("serviceAccountKey.json")
+firebase_admin.initialize_app(cred)
+db = firestore.client()
+#db = SQL("sqlite:///sessions.db")
 
 def main():
 
     # db.execute("DROP TABLE session_users2")
     # db.execute("DROP TABLE sessions2")
     # db.execute("DROP TABLE users2")
-    db.execute("DROP TABLE session_users2")
-    db.execute("DROP TABLE sessions2")
-    db.execute("DROP TABLE users2")
+    # db.execute("DROP TABLE session_users2")
+    # db.execute("DROP TABLE sessions2")
+    # db.execute("DROP TABLE users2")
 
     db.execute("CREATE TABLE sessions (session_id INTEGER PRIMARY KEY AUTOINCREMENT, session_name TEXT NOT NULL)")
 

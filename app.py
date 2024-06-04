@@ -8,6 +8,14 @@ from werkzeug.exceptions import default_exceptions, HTTPException, InternalServe
 from helpers import apology, session_required, Calendar, days, colors
 import re
 
+""
+import firebase_admin
+from firebase_admin import credentials,firestore
+
+cred = credentials.Certificate("serviceAccountKey.json")
+firebase_admin.initialize_app(cred)
+db = firestore.client()
+""
 
 """
 Todo:
@@ -33,12 +41,7 @@ app.config["TEMPLATES_AUTO_RELOAD"] = True
 
 
 # Configure CS50 Library to use SQLite database
-uri = os.environ.get("DB_URL").strip("'")
-keynames = re.findall("[{](\w*)[}]",uri)
-for key in keynames:
-    uri = re.sub("<"+key+">", os.environ.get(key), uri)
-db = SQL(uri) 
-db._autocommit=False
+
 
 
 @app.route("/",methods=["GET","POST"])

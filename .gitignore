@@ -11,3 +11,4 @@ flask_session
 *.png
 *.pem
 *.rdp
+*.json
