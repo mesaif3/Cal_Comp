@@ -5,3 +5,5 @@ requests
 gunicorn
 psycopg2
 mysql-connector-python
+firebase_admin
+json
