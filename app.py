@@ -11,6 +11,7 @@ import re
 ""
 import firebase_admin
 from firebase_admin import credentials,firestore
+from sql_firebase import *
 
 cred = credentials.Certificate("serviceAccountKey.json")
 firebase_admin.initialize_app(cred)
@@ -100,8 +101,8 @@ def join_session(this_route="/join_session"):
             return insert_flash(this_route,"invalid session name", 403)
 
         # query database for session_id
-        search = db.execute(f"SELECT * FROM {SESSIONS} WHERE (session_id = ?) and (session_name = ?)", SID, SName)
-
+        search = search_for_session(db,SID,SName)
+        
         # checks the validity of the search query
         if len(search) != 1:
             return insert_flash(this_route,"session id not found", 403)
@@ -146,18 +147,9 @@ def new_session(this_route="/new_session", code=200):
             return insert_flash(this_route, "Please Enter a valid Session Name")
 
         # creates a new session with the given name and an unused id
-        db.execute(f"INSERT INTO {SESSIONS} (session_name) VALUES(?)", SName)
-        query = db.execute(f"SELECT * FROM {SESSIONS} ORDER BY session_id DESC LIMIT 1")[0]
-        SID = query['session_id']
-        SName2 = query['session_name']
+        this_session = create_session(db,SName)[0]
 
-        # check if the correct session was found
-        if SName2 != SName or db.execute(f"SELECT * FROM {SESSION_USERS} WHERE (session_id=?)",SID):
-            print(query)
-            print(SName2)
-            print(SName)
-            print(db.execute(f"SELECT * FROM {SESSION_USERS} WHERE (session_id=?)",SID))
-            return apology("error in creating session", 403)
+        SID = this_session.session_id
 
         # initialize the session cookie
         session["session_id"] = SID
@@ -192,7 +184,7 @@ def del_calendar():
 
             # remove each person in the to_delete list from the cached session and the session's database
             all_people.pop(person.id)
-            db.execute(f"DELETE FROM {SESSION_USERS} WHERE (user_id = ?) and (session_id = ?)", person.id, session["session_id"])
+            expel_user(db,user_id=person.id, session_id=session["session_id"])
 
         # check to make sure the data update was done correctly
         db_people = get_people()
@@ -232,7 +224,7 @@ def add_calendar(this_route="/add_calendar"):
                 return insert_flash(this_route, "That's not a valid user!")
 
             # searches the database for the user
-            person = db.execute(f"SELECT * FROM {USERS} WHERE (user_id = ?) and (user_name = ?)", CalID, CalName)
+            person = search_for_user(db,user_id=CalID,user_name=CalName)
 
             # if one specific entry was not found or is already in the room, prompt the user again
             if len(person) != 1:
@@ -243,16 +235,13 @@ def add_calendar(this_route="/add_calendar"):
 
         # Assemple a new object for the person
             else: #if he exists
-                person = person[0]
-                new_person = Calendar().load(person)
+                new_person = person[0]
         else:# if they dont
-            new_person = Calendar(name=CalName, schedule={})
-            db.execute(f"INSERT INTO {USERS} (user_name, user_schedule, user_color) VALUES(?,?,?)", new_person.name, dumps(new_person.schedule), new_person.color)
-            new_person = Calendar().load(SQL_query=db.execute(f"SELECT * FROM {USERS} ORDER BY user_id DESC LIMIT 1"))
-
+            new_person = create_new_user(db,user_name=CalName)
+            
         # add new person to the list of people in this session
         session["active_ids"] += [new_person.id]
-        db.execute(f"INSERT INTO {SESSION_USERS} (session_id, user_id, user_name) VALUES(?,?,?)", session["session_id"], new_person.id, new_person.name)
+        add_user_to_session(db,session_id=session["session_id"], user=new_person)
         return redirect(f"/calendar_info/{new_person.name}/{new_person.id}")
 
     return render_template("add_calendar.html", all_people=all_people)
@@ -288,7 +277,7 @@ def Calendar_info(PName, PID):
             person.color = request.form.get('myColor')
 
         # update database
-        db.execute(f"UPDATE {USERS} SET user_schedule = ?, user_color = ? WHERE user_id = ?", dumps(person.schedule), person.color, person.id)
+        update_users(db, person)
         # feedback message to confirm with user
         flash(f"{person.name} has been updated!")
     return render_template("calendar_info.html", all_people=all_people, person=person, days=days, colors=colors) #, custom_color="D32AE1"
@@ -300,7 +289,7 @@ def get_people():
         return {}
         
     # get raw data on people
-    people = db.execute(f"SELECT * FROM {USERS} WHERE user_id IN (SELECT user_id FROM {SESSION_USERS} WHERE session_id = ?) ORDER BY user_id ASC", session["session_id"])
+    people = get_users_in_session(db, session_id=session["session_id"])
 
     # convert raw data into a list of Calendar objects
     people = list(map(lambda person: Calendar().load(person), people))

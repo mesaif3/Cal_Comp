@@ -90,10 +90,8 @@ for doc in docs:
     print(f"{doc.id} => {doc.to_dict()}")
 """
 def main():
-    Julia = search_for_user(db,user_id=1,user_name="Julia")
-    print(Julia)
-    delete_from_session(db,users=[Julia],session_id=18)
-
+    Julian = User(name="Julian",id=1)
+    update_users(db, Julian)
 # query database for session_id
 def search_for_session(db,SID,SName):
     # Create a reference to the collection
@@ -148,6 +146,20 @@ def delete_from_session(db,users:dict,session_id:int):
         session_users_ref.update({str(user.id): firestore.DELETE_FIELD})
     return
 
+def expel_user(db,user_id,session_id):
+    session_users_ref = db.collection(SESSION_USERS).document(str(session_id))
+
+    # Get the users in the current session
+    doc = session_users_ref.get()
+    if not doc.exists:  
+        return
+    doc = doc.to_dict()
+    session_info = Session_users().from_dict(doc)
+
+    if session_info.users.get(str(user_id),None):
+        session_users_ref.update({str(user_id): firestore.DELETE_FIELD})
+    return
+
 # search for a specific user
 def search_for_user(db,user_id,user_name):
     # Create reference to the users collection
@@ -180,7 +192,7 @@ def create_new_user(db,user_name):
     return user
 
 # adds a specific user to a specific session
-def add_user_to_session(session_id:int, user:User|Calendar):
+def add_user_to_session(db,session_id:int, user:User|Calendar):
     # Create reference to session_users document based on session_id
     session_users_ref = db.collection(SESSION_USERS).document(str(session_id))
 
@@ -189,7 +201,7 @@ def add_user_to_session(session_id:int, user:User|Calendar):
     return
 
 # gets the unloaded info of users in a specific session
-def get_users_in_session(session_id):
+def get_users_in_session(db,session_id):
     # Create reference to session_users document based on session_id
     this_session_users_ref = db.collection(SESSION_USERS).document(str(session_id))
 
@@ -207,6 +219,11 @@ def get_users_in_session(session_id):
     # Return a list of the Users in this session
     return users
 
+def update_users(db, user:User|Calendar):
+    # Create reference to the user in the users collection
+    user_ref = db.collection(USERS).document(str(user.id))
+    user_ref.set(user.to_dict())
+    return
 
 if __name__ == "__main__":
     main()
