@@ -13,9 +13,7 @@ import firebase_admin
 from firebase_admin import credentials,firestore
 from sql_firebase import *
 
-cred = credentials.Certificate("serviceAccountKey.json")
-firebase_admin.initialize_app(cred)
-db = firestore.client()
+
 ""
 
 """
@@ -43,6 +41,9 @@ app.config["TEMPLATES_AUTO_RELOAD"] = True
 
 # Configure CS50 Library to use SQLite database
 
+cred = credentials.Certificate("serviceAccountKey.json")
+firebase_admin.initialize_app(cred)
+db = firestore.client()
 
 
 @app.route("/",methods=["GET","POST"])
@@ -94,7 +95,7 @@ def join_session(this_route="/join_session"):
         SName,SID = request.form.get("session_info").split("#")
 
         # Ensure username was submitted
-        if not SID:
+        if not SID :
             return insert_flash(this_route,"must provide session id", 403)
 
         if not SName or SName == "__badname__":
@@ -108,7 +109,7 @@ def join_session(this_route="/join_session"):
             return insert_flash(this_route,"session id not found", 403)
 
         # Remember to which session user has logged in
-        session["session_id"] = SID
+        session["session_id"] = str(int(SID))
         session["session_name"] = SName
         session["active_ids"] = list(get_people().keys())
 
@@ -147,7 +148,7 @@ def new_session(this_route="/new_session", code=200):
             return insert_flash(this_route, "Please Enter a valid Session Name")
 
         # creates a new session with the given name and an unused id
-        this_session = create_session(db,SName)[0]
+        this_session = create_session(db,SName)
 
         SID = this_session.session_id
 
@@ -227,7 +228,7 @@ def add_calendar(this_route="/add_calendar"):
             person = search_for_user(db,user_id=CalID,user_name=CalName)
 
             # if one specific entry was not found or is already in the room, prompt the user again
-            if len(person) != 1:
+            if not person:
                 return insert_flash(this_route,"User not found :(")
 
             elif CalID in list(all_people.keys()):
@@ -235,7 +236,7 @@ def add_calendar(this_route="/add_calendar"):
 
         # Assemple a new object for the person
             else: #if he exists
-                new_person = person[0]
+                new_person = person
         else:# if they dont
             new_person = create_new_user(db,user_name=CalName)
             

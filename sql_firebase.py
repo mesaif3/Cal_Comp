@@ -19,6 +19,9 @@ from firebase_admin import credentials,firestore
 from helpers import Calendar 
 from json import dumps
 class User(Calendar):
+    # def __init__(self,schedule={}, name='', id=-1, color="primary"):
+    #     super().__init__(schedule, name, id, color)
+
     def to_dict(self):
         return {"user_name":self.name,"user_id":int(self.id),"user_schedule":dumps(self.schedule),"user_color":self.color}
         
@@ -68,15 +71,16 @@ def get_open_id(collection,id_name):
     except:
         return 1
 
-cred = credentials.Certificate("serviceAccountKey.json")
-firebase_admin.initialize_app(cred)
-db = firestore.client()
+# cred = credentials.Certificate("serviceAccountKey.json")
+# firebase_admin.initialize_app(cred)
+# db = firestore.client()
 
 SESSIONS = "sessions"
 USERS = "users"
 SESSION_USERS = "session_users"
-
-sessions_ref = db.collection(SESSIONS)
+# cred = credentials.Certificate("serviceAccountKey.json")
+# firebase_admin.initialize_app(cred)
+# db = firestore.client()
 
 """
 s1 = Session("session3", 3)
@@ -90,15 +94,16 @@ for doc in docs:
     print(f"{doc.id} => {doc.to_dict()}")
 """
 def main():
-    Julian = User(name="Julian",id=1)
-    update_users(db, Julian)
+    print("ran main")
+
+
 # query database for session_id
 def search_for_session(db,SID,SName):
     # Create a reference to the collection
     sessions_ref = db.collection(SESSIONS)
 
     # Construct the query
-    docs = sessions_ref.where("session_id", "==", SID).where("session_name", "==", SName).stream()
+    docs = sessions_ref.where("session_id", "==", int(SID)).where("session_name", "==", SName).stream()
     return [doc.to_dict() for doc in docs]
 
 # creates a new session with the given name and an unused id
@@ -203,10 +208,16 @@ def add_user_to_session(db,session_id:int, user:User|Calendar):
 # gets the unloaded info of users in a specific session
 def get_users_in_session(db,session_id):
     # Create reference to session_users document based on session_id
-    this_session_users_ref = db.collection(SESSION_USERS).document(str(session_id))
+    this_session_users_ref = db.collection(SESSION_USERS).document(str(int(session_id)))
 
     # Query the database for users in this session
-    doc = this_session_users_ref.get().to_dict()
+    doc = this_session_users_ref.get()
+    if not doc.exists:  
+        return []
+    doc= doc.to_dict()
+    print(this_session_users_ref)
+    print(doc)
+    print(this_session_users_ref.get())
     session_info = Session_users().from_dict(doc)
 
     # Query the Users Collection for users that match the user_id
@@ -220,10 +231,16 @@ def get_users_in_session(db,session_id):
     return users
 
 def update_users(db, user:User|Calendar):
+
     # Create reference to the user in the users collection
     user_ref = db.collection(USERS).document(str(user.id))
+
+    if type(user) == Calendar:
+        user = User(schedule=user.schedule, name=user.name, id=user.id, color=user.color)
     user_ref.set(user.to_dict())
     return
 
 if __name__ == "__main__":
     main()
+
+
