@@ -39,9 +39,20 @@ app.secret_key = os.environ.get("secret_key")
 app.config["TEMPLATES_AUTO_RELOAD"] = True
 
 
-# Configure CS50 Library to use SQLite database
-
-cred = credentials.Certificate("serviceAccountKey.json")
+# Configure firebase database
+my_credentials = {
+    "type": os.environ.get("type"),
+    "project_id": os.environ.get("project_id"),
+    "private_key_id": os.environ.get("private_key_id"),
+    "private_key": os.environ.get("private_key").replace(r'\n', '\n'),  # CHANGE HERE
+    "client_email": os.environ.get("client_email"),
+    "client_id": os.environ.get("client_id"),
+    "auth_uri": os.environ.get("auth_uri"),
+    "token_uri": os.environ.get("token_uri"),
+    "auth_provider_x509_cert_url": os.environ.get("auth_provider_x509_cert_url"),
+    "client_x509_cert_url": os.environ.get("client_x509_cert_url")
+}
+cred = credentials.Certificate(my_credentials)
 firebase_admin.initialize_app(cred)
 db = firestore.client()
 
