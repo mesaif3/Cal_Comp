@@ -202,7 +202,7 @@ def del_calendar():
         db_people = get_people()
         for id in set().union(all_people.keys(),db_people.keys()):
             if all_people[id] != db_people[id]:
-                return apology("UH OH! editing the data failed")
+                return apology("UH OH! editing the data failed", code=399, AP=get_people())
 
         # confirm to the user that the people were removed
         flash(f"{[person for person in to_delete]} {'was' if len(to_delete) == 1 else 'were'} removed from the room!")
@@ -270,18 +270,18 @@ def Calendar_info(PName, PID):
 
     # looks for the person through the session
     if not person:
-        return apology("user not found", 403)
+        return apology("user not found", 403, AP=get_people())
 
     # on update
     if request.method == "POST":
 
         # Ensures a schedule update occurs
         if not request.form.get("schedule"):
-            return apology("missing schedule?", 403)
+            return apology("missing schedule?", 403, AP=get_people())
 
         user_update = loads(request.form.get("schedule"))
         if not user_update:
-            return apology("missing schedule?", 403)
+            return apology("missing schedule?", 403, AP=get_people())
         person.schedule = user_update["Schedule"]
 
         # checks for a new color
@@ -320,7 +320,7 @@ def errorhandler(e):
     """Handle error"""
     if not isinstance(e, HTTPException):
         e = InternalServerError()
-    return apology(e.name, e.code)
+    return apology(e.name, e.code, AP=get_people())
 
 # Listen for errors
 for code in default_exceptions:
