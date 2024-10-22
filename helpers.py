@@ -13,7 +13,7 @@ colors=[
   "danger",
   "dark"]
 
-def apology(message, code=400, AP):
+def apology(message, code=400, AP={}):
     """Render message as an apology to user."""
     def escape(s):
         """
