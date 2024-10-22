@@ -89,7 +89,9 @@ Log In
                 var day_hour = button.id.split("-")
                 day = day_hour[0]
                 hour = day_hour[1]
-                schedule["Schedule"][day][hour] = user["ID"]
+                if ((typeof schedule["Schedule"][day][hour] != 'undefined') && (schedule["Schedule"][day][hour] != '')) {
+                    schedule["Schedule"][day][hour] = user["ID"]
+                }
             })
             document.querySelector("input[name='schedule']").value = JSON.stringify(schedule)
         }
