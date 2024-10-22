@@ -121,7 +121,7 @@ def create_session(db,SName):
     # Verify newly created session has been inserted into the database
     docs = sessions_ref.where("session_id", "==", this_session.session_id).where("session_name", "==", this_session.session_name).stream()
     SList = [doc.to_dict() for doc in docs]
-    print(SList)
+    # print(SList)
     if len(SList) != 1 or SName != SList[0].get("session_name",""):
         return apology("error in creating session", 403)
 
@@ -215,9 +215,9 @@ def get_users_in_session(db,session_id):
     if not doc.exists:  
         return []
     doc= doc.to_dict()
-    print(this_session_users_ref)
-    print(doc)
-    print(this_session_users_ref.get())
+    # print(this_session_users_ref)
+    # print(doc)
+    # print(this_session_users_ref.get())
     session_info = Session_users().from_dict(doc)
 
     # Query the Users Collection for users that match the user_id
