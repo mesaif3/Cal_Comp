@@ -89,7 +89,7 @@ Log In
                 var day_hour = button.id.split("-")
                 day = day_hour[0]
                 hour = day_hour[1]
-                if ((typeof schedule["Schedule"][day][hour] != 'undefined') && (schedule["Schedule"][day][hour] != '')) {
+                if ((typeof day != 'undefined') && (day != '') && (typeof hour != 'undefined') && (hour != '')) {
                     schedule["Schedule"][day][hour] = user["ID"]
                 }
             })
