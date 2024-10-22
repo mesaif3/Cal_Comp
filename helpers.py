@@ -13,7 +13,7 @@ colors=[
   "danger",
   "dark"]
 
-def apology(message, code=400):
+def apology(message, code=400, AP):
     """Render message as an apology to user."""
     def escape(s):
         """
@@ -25,7 +25,7 @@ def apology(message, code=400):
                          ("%", "~p"), ("#", "~h"), ("/", "~s"), ("\"", "''")]:
             s = s.replace(old, new)
         return s
-    return render_template("apology.html", top=code, bottom=escape(message)), code
+    return render_template("apology.html", all_people=AP, top=code, bottom=escape(message)), code
 
 
 def session_required(f):
